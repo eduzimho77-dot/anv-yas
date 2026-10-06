@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Uma cartinha para a Yas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --bg-a: #f3e6ff;
+    --bg-b: #ffe4ee;
+    --title: #b04a76;
+    --hint: #8a5d84;
+    --rose: #ff8fab;
+    --rose-deep: #e8698f;
+    --rose-soft: #ffb3c7;
+    --rose-pale: #ffc9d8;
+    --paper: #fffdfa;
+    --ink: #5a3a55;
+    --line: #f1dff0;
+    --margin: #ffb3c7;
+    --shadow: rgba(176, 74, 118, .28);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg-a: #2a1d45;
+      --bg-b: #43213f;
+      --title: #ffc2d6;
+      --hint: #d9b8dc;
+      --shadow: rgba(0, 0, 0, .5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg-a: #2a1d45;
+    --bg-b: #43213f;
+    --title: #ffc2d6;
+    --hint: #d9b8dc;
+    --shadow: rgba(0, 0, 0, .5);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg-a);
+    background-image: linear-gradient(160deg, var(--bg-a), var(--bg-b));
+    background-attachment: fixed;
+    color: var(--ink);
+    font-family: "Patrick Hand", "Comic Sans MS", "Segoe Print", cursive, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* corações flutuando ao fundo */
+  .floaters { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+  .floater {
+    position: absolute; bottom: -40px;
+    opacity: 0;
+    animation: floatUp linear forwards;
+    will-change: transform, opacity;
+  }
+  @keyframes floatUp {
+    0%   { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0; }
+    10%  { opacity: .75; }
+    90%  { opacity: .6; }
+    100% { transform: translate3d(var(--dx, 20px), -112vh, 0) rotate(var(--rot, 40deg)); opacity: 0; }
+  }
+
+  /* ---------- envelope ---------- */
+  .stage {
+    position: relative; z-index: 1;
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2.2rem; padding: 2rem 1rem;
+    transition: opacity .7s ease, transform .7s ease;
+  }
+  .stage.gone { opacity: 0; transform: scale(.9) translateY(30px); pointer-events: none; }
+  .stage[hidden] { display: none; }
+
+  .kicker {
+    font-family: "Pacifico", cursive;
+    font-size: clamp(1.7rem, 7vw, 2.4rem);
+    color: var(--title);
+    margin: 0; text-align: center; line-height: 1.3;
+  }
+
+  .envelope {
+    --w: min(86vw, 340px);
+    position: relative;
+    width: var(--w); height: calc(var(--w) * .68);
+    border: 0; padding: 0; background: none; cursor: pointer;
+    filter: drop-shadow(0 18px 22px var(--shadow));
+    animation: bob 3.2s ease-in-out infinite;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .envelope:focus-visible { outline: 3px dashed var(--title); outline-offset: 10px; border-radius: 12px; }
+  @keyframes bob { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-9px) rotate(1deg); } }
+  .envelope.open { animation: none; }
+
+  .envelope > span { position: absolute; display: block; }
+  .env-back { inset: 0; background: var(--rose-deep); border-radius: 10px; z-index: 1; }
+  .env-peek {
+    left: 7%; width: 86%; top: 8%; height: 80%;
+    background: var(--paper); border-radius: 6px; z-index: 2;
+    display: grid; place-items: start center; padding-top: 14%;
+    font-family: "Pacifico", cursive; color: var(--title); font-size: clamp(1rem, 4.4vw, 1.3rem);
+    transition: transform .9s cubic-bezier(.3, 1.2, .5, 1) .45s;
+  }
+  .envelope.open .env-peek { transform: translateY(-52%); }
+
+  .env-left, .env-right, .env-bottom { inset: 0; z-index: 3; border-radius: 10px; }
+  .env-left   { background: var(--rose);      clip-path: polygon(0 0, 54% 52%, 0 100%); }
+  .env-right  { background: var(--rose);      clip-path: polygon(100% 0, 46% 52%, 100% 100%); }
+  .env-bottom { background: var(--rose-soft); clip-path: polygon(0 100%, 50% 44%, 100% 100%); }
+
+  .env-flap {
+    left: 0; top: 0; width: 100%; height: 62%;
+    background: var(--rose-pale);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    transform-origin: top center;
+    z-index: 5;
+    transition: transform .6s ease-in-out, z-index 0s linear .3s;
+  }
+  .envelope.open .env-flap { transform: rotateX(180deg); z-index: 1; }
+
+  .env-seal {
+    left: 50%; top: 52%;
+    width: 52px; height: 52px; margin: -26px 0 0 -26px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ff9db6, #e0456f 70%);
+    color: #fff; font-size: 1.5rem; line-height: 52px; text-align: center;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, .25), inset 0 -3px 5px rgba(0, 0, 0, .15);
+    z-index: 6;
+    animation: beat 1.6s ease-in-out infinite;
+    transition: opacity .3s ease, transform .3s ease;
+  }
+  .envelope.open .env-seal { opacity: 0; transform: scale(.4); animation: none; }
+  @keyframes beat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.16); } 30% { transform: scale(1); } 45% { transform: scale(1.1); } }
+
+  .hint { margin: 0; color: var(--hint); font-size: 1.25rem; text-align: center; }
+
+  /* ---------- carta ---------- */
+  .letter-wrap {
+    position: relative; z-index: 1;
+    padding: 2rem 1rem 4rem;
+    display: flex; justify-content: center;
+  }
+  .letter-wrap[hidden] { display: none; }
+  .letter {
+    --lh: 2rem;
+    width: min(100%, 640px);
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(to right, transparent 3.2rem, var(--margin) 3.2rem, var(--margin) calc(3.2rem + 2px), transparent calc(3.2rem + 2px)),
+      repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--lh) - 2px), var(--line) calc(var(--lh) - 2px), var(--line) var(--lh));
+    background-position: 0 0, 0 .95rem;
+    border-radius: 14px;
+    padding: 2.2rem 1.4rem 2.6rem 4.2rem;
+    box-shadow: 0 22px 40px -10px var(--shadow), 0 0 0 1px rgba(255, 143, 171, .25);
+    transform-origin: 50% 0;
+    animation: unfold .9s cubic-bezier(.2, .9, .3, 1) both;
+    color: var(--ink);
+  }
+  @keyframes unfold { from { opacity: 0; transform: translateY(60px) scale(.94); } to { opacity: 1; transform: none; } }
+  .letter h1 {
+    font-family: "Pacifico", cursive; font-weight: 400;
+    color: var(--title); font-size: clamp(1.6rem, 6.4vw, 2.1rem);
+    line-height: 1.35; margin: 0 0 1.1rem; outline: none;
+  }
+  .letter p {
+    font-size: 1.32rem; line-height: var(--lh);
+    margin: 0 0 var(--lh);
+    opacity: 0; transform: translateY(14px);
+    transition: opacity .8s ease, transform .8s ease;
+  }
+  .letter p.in { opacity: 1; transform: none; }
+  .letter p.big { font-size: 1.5rem; color: var(--title); }
+  .letter p.last { margin-bottom: 1.2rem; }
+
+  .actions { display: flex; justify-content: center; margin-top: .6rem; }
+  .again {
+    font: inherit; font-size: 1.2rem;
+    background: var(--rose); color: #fff; border: 0; cursor: pointer;
+    padding: .55rem 1.3rem; border-radius: 999px;
+    box-shadow: 0 5px 0 var(--rose-deep);
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .again:hover { transform: translateY(1px); box-shadow: 0 4px 0 var(--rose-deep); }
+  .again:active { transform: translateY(5px); box-shadow: 0 0 0 var(--rose-deep); }
+  .again:focus-visible { outline: 3px dashed var(--title); outline-offset: 4px; }
+
+  @media (max-width: 420px) {
+    .letter { padding: 1.8rem 1rem 2.2rem 3.4rem; }
+    .letter { background-image:
+      linear-gradient(to right, transparent 2.5rem, var(--margin) 2.5rem, var(--margin) calc(2.5rem + 2px), transparent calc(2.5rem + 2px)),
+      repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--lh) - 2px), var(--line) calc(var(--lh) - 2px), var(--line) var(--lh)); }
+    .letter p { font-size: 1.22rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .envelope, .env-seal { animation: none; }
+    .env-peek, .env-flap, .stage { transition-duration: .01s; transition-delay: 0s; }
+    .letter { animation: none; }
+    .letter p { opacity: 1; transform: none; transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="floaters" id="floaters" aria-hidden="true"></div>
+
+<main>
+  <section class="stage" id="stage">
+    <h2 class="kicker">Uma cartinha para a Yas</h2>
+    <button class="envelope" id="envelope" type="button" aria-label="Abrir a cartinha">
+      <span class="env-back"></span>
+      <span class="env-peek" aria-hidden="true">Para a Yas ❤️</span>
+      <span class="env-left"></span>
+      <span class="env-right"></span>
+      <span class="env-bottom"></span>
+      <span class="env-flap"></span>
+      <span class="env-seal" aria-hidden="true">❤</span>
+    </button>
+    <p class="hint">toque no envelope para abrir</p>
+  </section>
+
+  <section class="letter-wrap" id="letterWrap" hidden>
+    <article class="letter" id="letter">
+      <h1 id="title" tabindex="-1">Feliz aniversário, Yas. ❤️</h1>
+
+      <p>Hoje eu fiquei pensando em tudo que a gente viveu e em como é difícil colocar em palavras alguém que, de alguma forma, foi tão importante pra mim.</p>
+
+      <p>Talvez a gente nunca tenha conseguido definir exatamente o que nós fomos. Um quase algo, talvez. Uma história que ficou no meio do caminho. Mas, sinceramente, pouco importa o nome que a gente dá. Porque eu lembro dos nossos dias juntos e sei o quanto eles significaram pra mim.</p>
+
+      <p>Lembro da gente saindo pra comer, dos momentos simples que talvez na época parecessem só mais um dia, mas que hoje eu percebo o quanto eram especiais. Lembro de assistir Homem-Aranha juntos, de ficar ali do seu lado, dividindo aquele momento com você.</p>
+
+      <p>Lembro de dormir com você, de acordar e saber que você estava ali do meu lado. Lembro dos nossos banhos juntos, das nossas conversas, das brincadeiras, dos abraços e daqueles momentos em que parecia que o mundo podia simplesmente esperar lá fora enquanto a gente ficava ali, sendo nós dois.</p>
+
+      <p>E talvez seja isso que mais mexa comigo.</p>
+
+      <p>Não são apenas os grandes momentos. São justamente essas pequenas coisas que ficaram guardadas em mim. Os dias comuns que, depois que passam, a gente percebe que nunca foram tão comuns assim.</p>
+
+      <p>Yas, eu não sei exatamente onde a nossa história vai ficar quando o tempo passar. Talvez a vida leve a gente para caminhos completamente diferentes. Talvez ainda existam capítulos que a gente nem imagina. Mas eu sei que, quando eu olhar para uma parte importante da minha vida e lembrar de momentos em que fui realmente feliz, você vai estar em algumas dessas lembranças.</p>
+
+      <p>E eu não quero lembrar de nós com tristeza.</p>
+
+      <p>Quero lembrar com carinho. Com um sorriso no rosto. Porque, apesar de tudo que aconteceu e de tudo que talvez não tenha acontecido, eu fui feliz ao seu lado.</p>
+
+      <p>Você me proporcionou momentos que eu vou guardar comigo por muito tempo.</p>
+
+      <p>Então, hoje, no seu aniversário, eu espero que a vida te devolva toda a felicidade que você merece. Que você realize seus sonhos, conheça lugares incríveis, viva histórias bonitas e encontre motivos para sorrir mesmo nos dias difíceis.</p>
+
+      <p>E se um dia você lembrar de nós, espero que também lembre com carinho.</p>
+
+      <p>Porque eu vou lembrar.</p>
+
+      <p>Vou lembrar das comidas, dos filmes, das noites, dos abraços, das conversas, dos banhos, das risadas e principalmente daquela sensação boa de simplesmente estar com você.</p>
+
+      <p>Obrigado por ter feito parte da minha vida, Yas.</p>
+
+      <p>Talvez nós tenhamos sido um “quase”.</p>
+
+      <p>Mas, para mim, nunca foi quase sentimento.</p>
+
+      <p>Foi real enquanto aconteceu.</p>
+
+      <p>E, por mais que algumas histórias não terminem exatamente como a gente imaginava, isso não apaga a beleza do que elas foram.</p>
+
+      <p class="big">Feliz aniversário, Yas. ❤️</p>
+
+      <p>Que esse novo ciclo seja lindo para você.</p>
+
+      <p class="big last">E, de coração, espero que você seja muito, muito feliz.</p>
+
+      <div class="actions">
+        <button class="again" id="again" type="button">reler com carinho 💌</button>
+      </div>
+    </article>
+  </section>
+</main>
+
+<script>
+(function () {
+  var envelope = document.getElementById('envelope');
+  var stage = document.getElementById('stage');
+  var wrap = document.getElementById('letterWrap');
+  var floaters = document.getElementById('floaters');
+  var title = document.getElementById('title');
+  var again = document.getElementById('again');
+  var paragraphs = Array.prototype.slice.call(document.querySelectorAll('.letter p'));
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var symbols = ['❤', '💗', '✨', '🌸', '💖', '⭐'];
+  var observer = null;
+  var opened = false;
+
+  function spawn(burst) {
+    if (reduce) return;
+    var el = document.createElement('span');
+    el.className = 'floater';
+    el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    el.style.left = (Math.random() * 100) + '%';
+    el.style.fontSize = (14 + Math.random() * 20) + 'px';
+    el.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px');
+    el.style.setProperty('--rot', (Math.random() * 90 - 45) + 'deg');
+    var dur = burst ? 3 + Math.random() * 3 : 9 + Math.random() * 8;
+    el.style.animationDuration = dur + 's';
+    if (burst) { el.style.bottom = (Math.random() * 40) + '%'; }
+    floaters.appendChild(el);
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, dur * 1000 + 200);
+  }
+
+  var ambient = null;
+  function startAmbient() {
+    if (reduce || ambient) return;
+    for (var i = 0; i < 6; i++) setTimeout(spawn, i * 400);
+    ambient = setInterval(function () { if (!document.hidden) spawn(); }, 1400);
+  }
+
+  function revealAll() { paragraphs.forEach(function (p) { p.classList.add('in'); }); }
+
+  function setupReveal() {
+    paragraphs.forEach(function (p) { p.classList.remove('in'); });
+    if (reduce || !('IntersectionObserver' in window)) { revealAll(); return; }
+    if (observer) observer.disconnect();
+    observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('in'); observer.unobserve(e.target); }
+      });
+    }, { threshold: 0.2, rootMargin: '0px 0px -8% 0px' });
+    paragraphs.forEach(function (p) { observer.observe(p); });
+  }
+
+  function openLetter() {
+    if (opened) return;
+    opened = true;
+    envelope.classList.add('open');
+    envelope.setAttribute('aria-expanded', 'true');
+    for (var i = 0; i < 22; i++) setTimeout(function () { spawn(true); }, i * 60);
+    setTimeout(function () { stage.classList.add('gone'); }, reduce ? 50 : 1700);
+    setTimeout(function () {
+      stage.hidden = true;
+      wrap.hidden = false;
+      window.scrollTo(0, 0);
+      setupReveal();
+      try { title.focus({ preventScroll: true }); } catch (e) {}
+    }, reduce ? 120 : 2400);
+  }
+
+  function closeLetter() {
+    opened = false;
+    wrap.hidden = true;
+    stage.hidden = false;
+    envelope.classList.remove('open');
+    envelope.removeAttribute('aria-expanded');
+    void stage.offsetWidth;
+    stage.classList.remove('gone');
+    window.scrollTo(0, 0);
+    try { envelope.focus({ preventScroll: true }); } catch (e) {}
+  }
+
+  envelope.addEventListener('click', openLetter);
+  again.addEventListener('click', closeLetter);
+  startAmbient();
+})();
+</script>
+</body>
+</html>
